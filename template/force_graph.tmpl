@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html>
+<head>
+</head>
+<body>
+</body>
+
+<script src="https://d3js.org/d3.v7.min.js"></script>
+
+<script>
+    let data = {{.Data}};
+    data = JSON.parse(data);
+    let height = 800;
+    let width = 1200;
+
+    // Create the SVG element with zoom and pan functionality
+    const svg = d3.select(document.body).append("svg")
+        .attr("width", width)
+        .attr("height", height)
+        .style("border", "1px solid black")
+        .call(d3.zoom()
+            .scaleExtent([0.1, 5])
+            .on("zoom", (event) => {
+                if (event && event.transform) {
+                    console.log("Zoom event triggered");
+                    g.attr("transform", event.transform);
+                } else {
+                    console.error("Zoom event triggered without a valid transform");
+                }
+            })
+            .filter(event => {
+                const validEventTypes = ['wheel', 'mousedown', 'touchstart'];
+                console.log("Zoom filter event type:", event ? event.type : "undefined");
+                return event && validEventTypes.includes(event.type);
+            })
+        );
+
+    // Group to hold nodes and links; applies zoom/pan transformations
+    const g = svg.append("g");
+
+    // Initialize the simulation
+    const simulation = d3.forceSimulation(data.nodes)
+        .force("link", d3.forceLink(data.links).id(d => d.id).distance(50))
+        .force("charge", d3.forceManyBody().strength(-50))
+        .force("center", d3.forceCenter(width / 2, height / 2))
+        .force("collision", d3.forceCollide().radius(40));
+
+    // Create link elements
+    const link = g.append("g")
+        .attr("stroke", "#999")
+        .attr("stroke-opacity", 0.6)
+        .selectAll("line")
+        .data(data.links)
+        .join("line")
+        .attr("stroke-width", d => Math.sqrt(d.value || 1));
+
+    // Create node elements
+    const node = g.append("g")
+        .attr("stroke", "#fff")
+        .attr("stroke-width", 1.5)
+        .selectAll("circle")
+        .data(data.nodes)
+        .join("circle")
+        .attr("r", 10)
+        .attr("fill", d => (d.group === 1) ? "#1f77b4" : "#ff7f0e")
+        .call(drag(simulation));
+
+    // Add titles to nodes (tooltip)
+    node.append("title")
+        .text(d => d.id);
+
+    // Add labels to nodes
+    const labels = g.append("g")
+        .selectAll("text")
+        .data(data.nodes)
+        .join("text")
+        .attr("x", 12)
+        .attr("y", ".31em")
+        .text(d => d.id)
+        .style("font-size", "12px")
+        .style("fill", "#000");
+
+    // On simulation tick, update node and link positions
+    simulation.on("tick", () => {
+        link
+            .attr("x1", d => d.source.x)
+            .attr("y1", d => d.source.y)
+            .attr("x2", d => d.target.x)
+            .attr("y2", d => d.target.y);
+
+        node
+            .attr("cx", d => d.x)
+            .attr("cy", d => d.y);
+
+        labels
+            .attr("x", d => d.x + 12)
+            .attr("y", d => d.y);
+    });
+
+    // Dragging functions for nodes
+    function drag(simulation) {
+        function dragstarted(event, d) {
+            if (!event.active) simulation.alphaTarget(0.3).restart();
+            if (d) {
+                d.fx = d.x;
+                d.fy = d.y;
+                console.log("Drag started for node:", d.id);
+            } else {
+                console.error("Undefined node during drag start");
+            }
+        }
+
+        function dragged(event, d) {
+            if (d) {
+                d.fx = event.x;
+                d.fy = event.y;
+                console.log("Dragging node:", d.id);
+            } else {
+                console.error("Undefined node during drag");
+            }
+        }
+
+        function dragended(event, d) {
+            if (!event.active) simulation.alphaTarget(0);
+            if (d) {
+                d.fx = null;
+                d.fy = null;
+                console.log("Drag ended for node:", d.id);
+            } else {
+                console.error("Undefined node during drag end");
+            }
+        }
+
+        return d3.drag()
+            .on("start", (event, d) => {
+                if (d) {
+                    dragstarted(event, d);
+                } else {
+                    console.error("Drag event triggered without a node");
+                }
+            })
+            .on("drag", (event, d) => {
+                if (d) {
+                    dragged(event, d);
+                } else {
+                    console.error("Drag event triggered without a node");
+                }
+            })
+            .on("end", (event, d) => {
+                if (d) {
+                    dragended(event, d);
+                } else {
+                    console.error("Drag event triggered without a node");
+                }
+            });
+    }
+</script>
+</html>

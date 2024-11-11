@@ -79,8 +79,6 @@ func GenerateForceGraph(notes []Note, links []Link, highlight []string, outputFi
 		}
 	}
 
-	fmt.Println(pathToTitle)
-
 	// Create the list of links
 	var linkList []LinkData
 	for _, link := range links {

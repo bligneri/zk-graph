@@ -4,16 +4,17 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"io"
 	"os"
 
 	"github.com/bligneri/zk-graph/pkg/graph"
 )
 
 func main() {
-	jsonFilePath := flag.String("json_file", "", "Path to the input JSON file")
-	highlight := flag.String("highlight", "", "Highlight zettel ID (comma-separated)")
-	outputFileName := flag.String("output", "out/output.html", "Path to the output HTML file")
+	jsonFilePath := flag.String("in", "", "Path to the input JSON file")
+	outputFileName := flag.String("out", "out/output.html", "Path to the output HTML file")
 	serverMode := flag.Bool("server", false, "Start a web server to view output files")
+	highlight := flag.String("highlight", "", "Highlight title or filename (comma-separated)")
 	flag.Parse()
 
 	if *serverMode {
@@ -34,7 +35,7 @@ func main() {
 	var jsonData []byte
 	var err error
 	if *jsonFilePath == "-" {
-		jsonData, err = os.ReadFile(*jsonFilePath)
+		jsonData, err = io.ReadAll(os.Stdin)
 	} else {
 		jsonData, err = os.ReadFile(*jsonFilePath)
 	}

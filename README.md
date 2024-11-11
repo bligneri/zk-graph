@@ -24,8 +24,18 @@ Becaue of this, I don't want to use any module unless the benefits would be huge
 
 # Typical commands
 
+## Installation
+
+for now:
+```shell
+go install github.com/bligneri/zk-graph/cmd/zk-graph
+```
+
+this will give you the `zk-graph` binary and you can now start using it.
+
 ## Launching the webserver
-The Webserver is watching the content of `out` and will serve a file directly (if there is a single file) 
+
+The Webserver is watching the content of `/tmp/zk-graph` directory and will serve a file directly (if there is a single file)
 or show the directory content (if there are multiple files)_
 ```shell
 ./zk-graph --server
@@ -36,8 +46,8 @@ You should launch the server and point a browser to this server
 ## Generating a file in two steps
 
 ```shell
-zk graph -t daily --format=json > my_notes.json
-zk-graph -json_file my_notes.json
+zk graph -t daily --format=json > /tmp/zk-graph/my_notes.json
+zk-graph -in /tmp/zk-graph/my_notes.json
 ```
 
 You can now see the graph on your browser
@@ -45,7 +55,7 @@ You can now see the graph on your browser
 ## Generating a file with a pipe
 
 ```shell
-zk graph -t daily --format=json | zk-graph -json_file my_notes.json
+zk graph -t daily --format=json | zk-graph -in - -out /tmp/zk-graph/my_notes.json
 ```
 
 => It will pipe the outcome of the `zk graph` command directly to the `zk-graph` utility and this file will be server by the webserver

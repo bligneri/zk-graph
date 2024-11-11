@@ -13,12 +13,13 @@ Some things I did add:
 
 Becaue of this, I don't want to use any module unless the benefits would be huge.
 
-## Future
+## Future development
 
 - [ ] Add more parameters to the template in particular the size of the `d3` canvas, the `strength` of the various forces. Most certainly in a configuration file in the `.zk` directory?
 - [ ] Keep the first `200` charcters of the content of each note to offer a preview when clicking on a node?
 - [ ] If possible, being able to open a `note` from the Web launching the default editor for `markdown` content
-- [ ] Add an option to chose another `tmpl` file to make this code more versatile
+- [x] Embed the default template
+- [x] Add an option to chose another `tmpl` file to make this code more versatile
 - [ ] Tests (zero tests for now!)
 - [ ] Open the browser with the correct port when launching the webserver (+option to deactivate this behaviour)
 
@@ -33,15 +34,6 @@ go install github.com/bligneri/zk-graph/cmd/zk-graph
 
 this will give you the `zk-graph` binary and you can now start using it.
 
-## Launching the webserver
-
-The Webserver is watching the content of `/tmp/zk-graph` directory and will serve a file directly (if there is a single file)
-or show the directory content (if there are multiple files)_
-```shell
-./zk-graph --server
-```
-
-You should launch the server and point a browser to this server
 
 ## Generating a file in two steps
 
@@ -55,7 +47,17 @@ You can now see the graph on your browser
 ## Generating a file with a pipe
 
 ```shell
-zk graph -t daily --format=json | zk-graph -in - -out /tmp/zk-graph/my_notes.json
+zk graph -t daily --format=json | zk-graph -in -
 ```
 
 => It will pipe the outcome of the `zk graph` command directly to the `zk-graph` utility and this file will be server by the webserver
+
+## Launching the webserver
+
+The Webserver is watching the content of `/tmp/zk-graph` directory and will serve a file directly (if there is a single file)
+or show the directory content (if there are multiple files)_
+```shell
+./zk-graph --server
+```
+
+The webserver will fail if there is no `*.html` to serve

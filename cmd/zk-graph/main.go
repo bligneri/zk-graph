@@ -7,6 +7,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/bligneri/zk-graph/pkg/graph"
 )
@@ -16,6 +17,7 @@ func main() {
 	outputFileName := flag.String("out", "/tmp/zk-graph/output.html", "Path to the output HTML file")
 	serverMode := flag.Bool("server", false, "Start a web server to view output files")
 	highlight := flag.String("highlight", "", "Highlight title or filename (comma-separated)")
+	templateName := flag.String("template", "", "Name of the template")
 	flag.Parse()
 
 	if *serverMode {
@@ -52,21 +54,12 @@ func main() {
 		os.Exit(1)
 	}
 
-	idTitleDict := make(map[string][2]string)
-	for _, note := range data.Notes {
-		title := note.Title
-		if title == "" {
-			title = note.Filename
-		}
-		idTitleDict[note.Path] = [2]string{title, note.Path}
-	}
-
 	highlightList := []string{}
 	if *highlight != "" {
-		highlightList = append(highlightList, *highlight) // Split by commas if necessary
+		highlightList = strings.Split(*highlight, ",") // Split comma-separated highlights into a slice
 	}
 
-	err = graph.GenerateForceGraph(idTitleDict, data.Links, highlightList, *outputFileName)
+	err = graph.GenerateForceGraph(data.Notes, data.Links, highlightList, *outputFileName, *templateName)
 	if err != nil {
 		fmt.Printf("Error generating force graph: %v\n", err)
 	}

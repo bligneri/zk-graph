@@ -8,8 +8,33 @@
 <script src="https://d3js.org/d3.v7.min.js"></script>
 
 <script>
+function showNodeInfo(event, d) {
+    if (!d) {
+        console.warn("Node data is undefined");
+        return;
+    }
+
+    var infoBox = document.getElementById('node-info');
+    var titleElem = document.getElementById('node-title');
+    var pathElem = document.getElementById('node-path');
+    var openFileLink = document.getElementById('open-file');
+
+    // Provide a fallback value if `title` is undefined
+    titleElem.textContent = d.title || d.id || "Unknown Title";
+    var fullPath = d.absPath || "Unknown Path"; // Provide a fallback if `absPath` is missing
+    pathElem.textContent = fullPath;
+    openFileLink.href = 'file://' + fullPath;
+
+    infoBox.style.display = 'block';
+}
+</script>
+
+<script>
     let data = {{.Data}};
     data = JSON.parse(data);
+    if (!data.links) {
+        data.links = []; // Initialize as an empty array if null or undefined
+    }
     let height = 800;
     let width = 1200;
 
@@ -33,7 +58,8 @@
                 console.log("Zoom filter event type:", event ? event.type : "undefined");
                 return event && validEventTypes.includes(event.type);
             })
-        );
+        )
+        .on("click", showNodeInfo);
 
     // Group to hold nodes and links; applies zoom/pan transformations
     const g = svg.append("g");

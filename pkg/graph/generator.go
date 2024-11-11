@@ -6,10 +6,8 @@ import (
 	"html/template"
 	"os"
 	"path/filepath"
-)
 
-const (
-	ForceGraphTemplateName = "template/force_graph.tmpl"
+	"github.com/bligneri/zk-graph/pkg/assets"
 )
 
 type Link struct {
@@ -17,55 +15,91 @@ type Link struct {
 	TargetPath string `json:"targetPath"`
 }
 
+type LinkData struct {
+	Source string `json:"source"`
+	Target string `json:"target"`
+	Value  string `json:"value"`
+}
+
 type Note struct {
+	AbsPath  string `json:"absPath"`
 	Path     string `json:"path"`
 	Title    string `json:"title"`
 	Filename string `json:"filename"`
 }
 
 type Node struct {
-	ID    string `json:"id"`
-	Group int    `json:"group"`
+	ID      string `json:"id"`
+	Group   int    `json:"group"`
+	AbsPath string `json:"absPath"`
+	Title   string `json:"title"`
 }
 
 type GraphData struct {
-	Nodes []Node              `json:"nodes"`
-	Links []map[string]string `json:"links"`
+	Nodes []Node     `json:"nodes"`
+	Links []LinkData `json:"links"`
 }
 
-func GenerateForceGraph(idTitleDict map[string][2]string, links []Link, highlight []string, outputFileName string) error {
+func GenerateForceGraph(notes []Note, links []Link, highlight []string, outputFileName string, templateName string) error {
 	nodes := []Node{}
+	var templateContent string
+	var tmpl *template.Template
+
 	highlightMap := make(map[string]bool)
 	for _, h := range highlight {
 		highlightMap[h] = true
 	}
 
-	for uid, val := range idTitleDict {
-		title := val[0]
+	for _, note := range notes {
+		title := note.Title
+		if title == "" {
+			title = note.Filename
+		}
+
 		group := 1
-		if highlightMap[uid] {
+		if highlightMap[note.Filename] {
 			group = 2
 		}
-		nodes = append(nodes, Node{ID: title, Group: group})
+
+		nodes = append(nodes, Node{
+			ID:      title,
+			Group:   group,
+			AbsPath: note.AbsPath,
+			Title:   title,
+		})
 	}
 
-	linkList := []map[string]string{}
 	pathToTitle := make(map[string]string)
-	for path, val := range idTitleDict {
-		pathToTitle[path] = val[0]
+	for _, note := range notes {
+		if note.Path != "" {
+			pathToTitle[note.Path] = note.Title
+			if note.Title == "" {
+				pathToTitle[note.Path] = note.Filename // Fallback to filename if title is empty
+			}
+		}
 	}
 
+	fmt.Println(pathToTitle)
+
+	// Create the list of links
+	var linkList []LinkData
 	for _, link := range links {
 		sourceID, sourceOK := pathToTitle[link.SourcePath]
 		targetID, targetOK := pathToTitle[link.TargetPath]
 		if sourceOK && targetOK {
-			linkList = append(linkList, map[string]string{
-				"source": sourceID,
-				"target": targetID,
-				"value":  "2",
+			linkList = append(linkList, LinkData{
+				Source: sourceID,
+				Target: targetID,
+				Value:  "2",
 			})
 		} else {
-			fmt.Printf("Warning: Missing source or target ID for link from %s to %s\n", link.SourcePath, link.TargetPath)
+			// Improved error logging for missing links
+			if !sourceOK {
+				fmt.Printf("Warning: Missing source ID for link from %s\n", link.SourcePath)
+			}
+			if !targetOK {
+				fmt.Printf("Warning: Missing target ID for link to %s\n", link.TargetPath)
+			}
 		}
 	}
 
@@ -75,12 +109,19 @@ func GenerateForceGraph(idTitleDict map[string][2]string, links []Link, highligh
 		return fmt.Errorf("error marshalling graph data: %v", err)
 	}
 
-	templateContent, err := os.ReadFile(ForceGraphTemplateName)
-	if err != nil {
-		return fmt.Errorf("error reading template file: %v", err)
+	if templateName != "" {
+		content, err := os.ReadFile(templateName)
+		if err == nil {
+			templateContent = string(content)
+		} else {
+			fmt.Printf("Warning: Unable to read specified template file '%s', using default template. Error: %v\n", templateName, err)
+			templateContent = assets.GetForceGraphTemplate()
+		}
+	} else {
+		templateContent = assets.GetForceGraphTemplate()
 	}
 
-	tmpl, err := template.New("graph").Parse(string(templateContent))
+	tmpl, err = template.New("graph").Parse(templateContent)
 	if err != nil {
 		return fmt.Errorf("error parsing template: %v", err)
 	}

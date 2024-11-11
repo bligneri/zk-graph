@@ -6,8 +6,6 @@ import (
 	"path/filepath"
 )
 
-const DefaultOutDir = "out"
-
 func StartServer(outputDir string) {
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		files, err := filepath.Glob(filepath.Join(outputDir, "*.html"))
@@ -42,7 +40,7 @@ func StartServer(outputDir string) {
 			return
 		}
 
-		filePath := filepath.Join(DefaultOutDir, fileName)
+		filePath := filepath.Join(outputDir, fileName)
 		http.ServeFile(w, r, filePath)
 	})
 

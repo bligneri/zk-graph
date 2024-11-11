@@ -58,8 +58,7 @@ function showNodeInfo(event, d) {
                 console.log("Zoom filter event type:", event ? event.type : "undefined");
                 return event && validEventTypes.includes(event.type);
             })
-        )
-        .on("click", showNodeInfo);
+            );
 
     // Group to hold nodes and links; applies zoom/pan transformations
     const g = svg.append("g");
@@ -89,7 +88,11 @@ function showNodeInfo(event, d) {
         .join("circle")
         .attr("r", 10)
         .attr("fill", d => (d.group === 1) ? "#1f77b4" : "#ff7f0e")
-        .call(drag(simulation));
+        .call(drag(simulation))
+        .on("click", function(event, d) {
+            if (d3.event.defaultPrevented) return;
+            showNodeInfo(event, d);
+        });
 
     // Add titles to nodes (tooltip)
     node.append("title")

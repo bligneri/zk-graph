@@ -44,6 +44,6 @@ func StartServer(outputDir string) {
 		http.ServeFile(w, r, filePath)
 	})
 
-	fmt.Println("Serving files on http://localhost:8080")
+	fmt.Printf("Serving files from %s on http://localhost:8080", outputDir)
 	http.ListenAndServe(":8080", nil)
 }
